@@ -1,0 +1,140 @@
+---
+title: "Awk-tutorial"
+output: html_document
+date: "2023-04-03"
+---
+
+# Data Manipulation with Awk in Unix
+
+"awk" is a versatile and powerful command-line tool used for text processing and data extraction in Unix/Linux systems. It is named after its creators: Alfred Aho, Peter Weinberger, and Brian Kernighan.
+
+The `awk` command operates on text files, reading the file line-by-line and performing actions on each line based on user-defined patterns and actions. It is particularly useful for data wrangling tasks, such as manipulating data files, extracting data from logs, and transforming data into different formats.
+
+The basic syntax of an "awk" command is:
+
+`awk '$1 == "chr1"' file`
+
+Refer to column by number expamle `$1`
+
+```{bash}
+# To return line for chromosome 1
+awk '$1 == "chr1"' cpg.bed | head 5
+
+# Return everything but not chromosom 1
+awk '$1 != "chr1"'
+```
+
+For quality check we can command like
+
+```{bash}
+awk '$2 > $3' cpg.bed
+
+```
+
+## NR record number (row number)
+
+```{bash}
+# Return the 100th line in the file  
+awk 'NR ==100' cpg.bed
+
+# First 100 line 
+
+awk 'NR > 100' cpg.bed
+
+# More complex manipulation 
+awk 'NR >= 100 && NR <= 200' cpg.bed | wc -l
+
+```
+
+## Getting more powerful
+
+```{bash}
+awk '(NR >= 100 && NR <= 200 ) || ($1 == "chr22" )' cpg.bed | less 
+```
+
+## Using print statement with awk (adding a new column to dataframe in r)
+
+`$0` captures the entire data
+
+```{bash}
+
+
+awk '{print $0, $3-$2}' cpg.bed | head
+
+awk '{print $0, $3-$2}' cpg.bed > cpg.lenght
+
+awk '{print $0, $3-$2}' cpg.bed | head
+
+```
+
+## Managing seprated space with awk
+
+```{bash}
+# check the output delimiter 
+awk '{print $0, $3-$2}' cpg.bed | cat -t | head
+
+# add tab as delimiter 
+
+awk -v OFS="\t" '{print $0, $3-$2}'cpg.bed | cat -t
+
+```
+
+# Reorder columns with awk
+
+```{bash}
+awk -v OFS="\t" '{print $4,$1}' cpg.bed
+
+# cut command is limited 
+
+cut -f 4,1 cpg.bed # doesnt reorder 
+```
+
+## Compute with awk
+
+```{bash}
+# find sum 
+awk '{sum_len += $3-$2}END{print sum_len}' cpg.bed 
+
+# find average 
+awk '{sum_len += $3-$2}END{print sum_len/NR}' cpg.bed 
+```
+
+## Number of column in data
+
+```{bash}
+# check for consitency in colunm number 
+awk '{print NF}' cpg.bed | sort | uniq
+```
+
+## Pattern matching with awk
+
+```{bash}
+awk '/^chr22/' cpg.bed
+
+awk '/^chr22/ || /^chr6/' cpg.bed
+```
+
+# Bioawk
+
+```{bash}
+bioawk -t -c bed '{print $chrom, $start}' cpg.bed | head -n 3
+```
+
+## Bioawk with fastq file
+
+```{bash}
+#wget https://bedtools-tutorials.s3.amazonaws.com/web/toy.fastq
+
+bioawk -c fastx '{print $seq}' toy.fastq | head -n 4
+
+bioawk -c fastx '{print $name}' toy.fastq | head -n 4
+
+```
+
+```{bash}
+bioawk -c fastx '{print $name,$seq,"+",$qual}' toy.fastq | head -n 4
+```
+
+```{bash}
+bioawk -c fastx '{print length($seq)}' toy.fastq | head -n 4
+```
